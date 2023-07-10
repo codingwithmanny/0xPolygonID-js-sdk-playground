@@ -26,6 +26,9 @@ import {
   IdentityWallet,
   CredentialStatusType,
   CredentialRequest,
+  CredentialStatusResolverRegistry,
+  IssuerResolver,
+  RHSResolver,
 } from "@0xpolygonid/js-sdk";
 
 // Config
@@ -83,7 +86,19 @@ const initIdentityWallet = async (
   console.group("Setup\n========================================================");
   const dataStorage = initDataStorage();
   // console.log({ dataStorage });
-  const credentialWallet = new CredentialWallet(dataStorage); //await initCredetialWallet(dataStorage);
+  // const credentialWallet = new CredentialWallet(dataStorage); //await initCredetialWallet(dataStorage);
+  const statusRegistry = new CredentialStatusResolverRegistry();
+  statusRegistry.register(
+    CredentialStatusType.SparseMerkleTreeProof,
+    new IssuerResolver()
+  );
+  statusRegistry.register(
+    CredentialStatusType.Iden3ReverseSparseMerkleTreeProof,
+    new RHSResolver(dataStorage.states)
+  );
+  const credentialWallet = new CredentialWallet(dataStorage, statusRegistry);
+
+
   // console.log({ credentialWallet });
   const identityWallet = await initIdentityWallet(
     dataStorage,
@@ -114,27 +129,27 @@ const initIdentityWallet = async (
     },
   });
 
-  // Issuer Auth DID
-  await fs.writeFileSync(
-    path.join(__dirname, "../data", "issuerID.json"),
-    JSON.stringify(issuerWallet.did, null, 2)
-  );
-  // Issuer Auth BabyJubJub Credential
-  await fs.writeFileSync(
-    path.join(__dirname, "../data", "issuerCredential.json"),
-    JSON.stringify(issuerWallet.credential, null, 2)
-  );
-  // Receiver Auth DID
-  await fs.writeFileSync(
-    path.join(__dirname, "../data", "receiverID.json"),
-    JSON.stringify(receiverWallet.did, null, 2)
-  );
-  // Receiver Auth BabyJubJub Credential
-  await fs.writeFileSync(
-    path.join(__dirname, "../data", "receiverCredential.json"),
-    JSON.stringify(receiverWallet.credential, null, 2)
-  );
-  console.groupEnd();
+  // // Issuer Auth DID
+  // await fs.writeFileSync(
+  //   path.join(__dirname, "../data", "issuerID.json"),
+  //   JSON.stringify(issuerWallet.did, null, 2)
+  // );
+  // // Issuer Auth BabyJubJub Credential
+  // await fs.writeFileSync(
+  //   path.join(__dirname, "../data", "issuerCredential.json"),
+  //   JSON.stringify(issuerWallet.credential, null, 2)
+  // );
+  // // Receiver Auth DID
+  // await fs.writeFileSync(
+  //   path.join(__dirname, "../data", "receiverID.json"),
+  //   JSON.stringify(receiverWallet.did, null, 2)
+  // );
+  // // Receiver Auth BabyJubJub Credential
+  // await fs.writeFileSync(
+  //   path.join(__dirname, "../data", "receiverCredential.json"),
+  //   JSON.stringify(receiverWallet.credential, null, 2)
+  // );
+  // console.groupEnd();
 
   // Issue Credential
   // ========================================================
@@ -157,8 +172,8 @@ const initIdentityWallet = async (
 
   const credential = await identityWallet.issueCredential(
     issuerWallet.did,
-    credentialRequest
+    credentialRequest,
   );
   console.log({ credential });
-  console.groupEnd();
+  // console.groupEnd();
 })();
